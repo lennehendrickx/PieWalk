@@ -3,6 +3,7 @@ import './App.css';
 import MultitrackPlayer, { PlayerStateChanged } from './player/Player';
 import { FetchAudioLoader } from './player/AudioLoader';
 
+const BASE_PATH = '/Users/lennehendrickx/Documents/karaoke-version-lijst';
 const audioLoader = new FetchAudioLoader();
 const player = new MultitrackPlayer(audioLoader);
 
@@ -21,7 +22,16 @@ function App() {
 
     useEffect(() => {
         player.load(
-            '/Users/lennehendrickx/Documents/karaoke-version-lijst/Billy_Joel_Piano_Man/Piano_Custom_Backing_Track.mp3'
+            [
+                `${BASE_PATH}/Billy_Joel_Piano_Man/Accordion_Custom_Backing_Track.mp3`,
+                `${BASE_PATH}/Billy_Joel_Piano_Man/Acoustic_Guitar_Custom_Backing_Track.mp3`,
+                `${BASE_PATH}/Billy_Joel_Piano_Man/Bass_Custom_Backing_Track.mp3`,
+                `${BASE_PATH}/Billy_Joel_Piano_Man/Drum_Kit_Custom_Backing_Track.mp3`,
+                `${BASE_PATH}/Billy_Joel_Piano_Man/Harmonica_Custom_Backing_Track.mp3`,
+                `${BASE_PATH}/Billy_Joel_Piano_Man/Lead_Vocal_Custom_Backing_Track.mp3`,
+                `${BASE_PATH}/Billy_Joel_Piano_Man/Mandolin_Custom_Backing_Track.mp3`,
+                `${BASE_PATH}/Billy_Joel_Piano_Man/Piano_Custom_Backing_Track.mp3`
+            ]
         );
     }, []);
 

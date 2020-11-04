@@ -1,11 +1,13 @@
-import Track from './Track';
+import Track, { TrackState } from './Track';
 import { AudioLoader } from './AudioLoader';
 import { EventEmitter } from './EventEmitter';
 
 export enum PlayerState {
     EMPTY = 'EMPTY',
+    LOADING = 'LOADING',
     PAUSED = 'PAUSED',
     PLAYING = 'PLAYING',
+    ENDED = 'ENDED',
 }
 
 export type PlayerStateChanged = {
@@ -21,11 +23,15 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
     private _state: PlayerState;
     private readonly _audioContext: AudioContext;
     private _audioLoader: AudioLoader;
-    private _track: Track | undefined;
+    private _tracks: Array<Track>;
+    private _currentTime: number;
+    private _startTime: number;
 
     constructor(audioLoader: AudioLoader) {
         super();
         this._state = PlayerState.EMPTY;
+        this._tracks = [];
+        this._currentTime = this._startTime = 0;
         this._audioLoader = audioLoader;
         // for cross browser compatibility
         // @ts-ignore
@@ -33,40 +39,51 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         this._audioContext = new AudioContext();
     }
 
-    get state(): PlayerState {
-        return this._state;
+    async load(paths: Array<string>): Promise<void> {
+        this.state = PlayerState.LOADING;
+        this._tracks = await Promise.all(paths.map(track => this._createTrack(track)));
+        this.state = PlayerState.PAUSED;
     }
 
-    async load(path: string): Promise<void> {
+    private async _createTrack(path: string): Promise<Track> {
         const arrayBuffer = await this._audioLoader.load(path);
         const audioBuffer = await this._audioContext.decodeAudioData(arrayBuffer);
-        this._track = new Track(audioBuffer, this._audioContext);
-        this._changeState(PlayerState.PAUSED);
+        const track = new Track(audioBuffer, this._audioContext);
+        track.on('stateChange', ({ to }) => {
+            if (to === TrackState.ENDED && this._tracks.every(({ state }) => state === TrackState.ENDED)) {
+                this._currentTime = this._startTime = 0;
+                this.state = PlayerState.ENDED;
+            }
+        });
+        return track;
     }
 
-    async play() {
+    async play(): Promise<void> {
         await this._resumeAudioContext();
-        if (this._state === PlayerState.PAUSED) {
-            this._track?.play();
-            this._changeState(PlayerState.PLAYING);
+        if (this._state === PlayerState.PAUSED || this._state === PlayerState.ENDED) {
+            this._tracks.forEach(track => track.play());
+            this._startTime = this._audioContext.currentTime;
+            this.state = PlayerState.PLAYING;
         }
     }
 
-    async pause() {
+    pause(): void {
         if (this._state === PlayerState.PLAYING) {
-            this._track?.pause();
-            this._changeState(PlayerState.PAUSED);
+            this._tracks.forEach(track => track.pause());
+            const offset = this._audioContext.currentTime - this._startTime;
+            this._currentTime = this._currentTime + offset;
+            this.state = PlayerState.PAUSED;
         }
     }
 
-    clear() {
+    clear(): void {
         if (this._state === PlayerState.EMPTY) {
             return;
         }
 
-        this._track?.stop();
-        this._track = undefined;
-        this._changeState(PlayerState.EMPTY);
+        this._tracks.forEach(track => track.clear());
+        this._tracks = [];
+        this.state = PlayerState.EMPTY;
     }
 
     private async _resumeAudioContext(): Promise<void> {
@@ -75,10 +92,18 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         }
     }
 
-    private _changeState(to: PlayerState) {
+    // @ts-ignore
+    get state(): PlayerState {
+        return this._state;
+    }
+
+    // @ts-ignore
+    private set state(to: PlayerState) {
         const from = this._state;
         this._state = to;
-        this.emit('stateChange', { from, to });
+        if (from !== to) {
+            this.emit('stateChange', { from, to });
+        }
     }
 }
 

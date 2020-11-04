@@ -1,4 +1,5 @@
 import ee from 'event-emitter';
+import allOff from 'event-emitter/all-off';
 
 type EventMap = Record<string, any>;
 
@@ -10,7 +11,6 @@ export interface Emitter<T extends EventMap> {
 
     off<K extends EventKey<T>>(eventName: K, fn: EventReceiver<T[K]>): void;
 
-    emit<K extends EventKey<T>>(eventName: K, params: T[K]): void;
 }
 
 export class EventEmitter<T extends EventMap> implements Emitter<T> {
@@ -26,5 +26,9 @@ export class EventEmitter<T extends EventMap> implements Emitter<T> {
 
     emit<K extends EventKey<T>>(eventName: K, params: T[K]) {
         this.emitter.emit(eventName, params);
+    }
+
+    allOff():void {
+        allOff(this.emitter);
     }
 }
