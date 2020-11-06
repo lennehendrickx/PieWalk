@@ -3,15 +3,16 @@ package com.lennehendrickx.piewalk;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,12 +27,7 @@ public class PlaylistController {
 
     @GetMapping
     Flux<Song> playlist() {
-        try (Stream<Path> songPaths = Files.list(basePath)) {
-            List<Song> playlist = songPaths.filter(Files::isDirectory).map(this::toSong).collect(Collectors.toList());
-            return Flux.fromIterable(playlist);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return Flux.fromStream(list(basePath, Files::isDirectory).map(this::toSong));
     }
 
     @GetMapping("/{song}/{track}")
@@ -40,10 +36,14 @@ public class PlaylistController {
     }
 
     private Song toSong(Path songPath) {
-        try(Stream<Path> trackPaths = Files.list(songPath)) {
-            var name = songPath.getFileName().toString();
-            var tracks = trackPaths.filter(Files::isRegularFile).map(Path::getFileName).map(Path::toString).map(Track::new).collect(Collectors.toList());
-            return new Song(name, tracks);
+        var name = songPath.getFileName().toString();
+        var tracks = list(songPath, Files::isRegularFile).map(Path::getFileName).map(Path::toString).map(Track::new).collect(Collectors.toList());
+        return new Song(name, tracks);
+    }
+
+    private static Stream<Path> list(Path path, Predicate<Path> predicate) {
+        try {
+            return Files.list(path).filter(predicate);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
