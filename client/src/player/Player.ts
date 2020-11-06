@@ -61,8 +61,8 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
     async play(): Promise<void> {
         await this._resumeAudioContext();
         if (this._state === PlayerState.PAUSED || this._state === PlayerState.ENDED) {
-            this._tracks.forEach(track => track.play());
             this._startTime = this._audioContext.currentTime;
+            this._tracks.forEach(track => track.play(this._startTime));
             this.state = PlayerState.PLAYING;
         }
     }
