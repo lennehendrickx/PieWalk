@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
@@ -37,8 +38,12 @@ public class PlaylistController {
 
     private Song toSong(Path songPath) {
         var name = songPath.getFileName().toString();
-        var tracks = list(songPath, Files::isRegularFile).map(Path::getFileName).map(Path::toString).map(Track::new).collect(Collectors.toList());
+        var tracks = list(songPath, Files::isRegularFile).map(this::toTrack).collect(toList());
         return new Song(name, tracks);
+    }
+
+    private Track toTrack(Path trackPath) {
+        return new Track(trackPath.getFileName().toString());
     }
 
     private static Stream<Path> list(Path path, Predicate<Path> predicate) {
