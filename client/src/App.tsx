@@ -1,48 +1,69 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import './App.css';
-import MultitrackPlayer, { PlayerStateChanged } from './player/Player';
-import { FetchAudioLoader } from './player/AudioLoader';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import Player from './ui/player/Player';
+import { createStyles, Theme, makeStyles } from '@material-ui/core/styles';
+import Drawer from '@material-ui/core/Drawer';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
+import SongList from './ui/songlist/SongList';
 
-const audioLoader = new FetchAudioLoader();
-const player = new MultitrackPlayer(audioLoader);
+const drawerWidth = 300;
 
-function App() {
-    const [playerState, setPlayerState] = useState(player.state);
+const useStyles = makeStyles((theme: Theme) =>
+    createStyles({
+        root: {
+            display: 'flex'
+        },
+        appBar: {
+            zIndex: theme.zIndex.drawer + 1
+        },
+        drawer: {
+            width: drawerWidth,
+            flexShrink: 0
+        },
+        drawerPaper: {
+            width: drawerWidth
+        },
+        drawerContainer: {
+            overflow: 'auto'
+        },
+        content: {
+            flexGrow: 1,
+            padding: theme.spacing(3)
+        }
+    })
+);
 
-    const handlePlayerStateChanged = useCallback(
-        ({ to }: PlayerStateChanged) => setPlayerState(to),
-        [setPlayerState]
-    );
-
-    useEffect(() => {
-        player.on('stateChange', handlePlayerStateChanged);
-        return () => player.off('stateChange', handlePlayerStateChanged);
-    }, [handlePlayerStateChanged]);
-
-    useEffect(() => {
-        player.load(
-            [
-                `Billy_Joel_Piano_Man/Accordion_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Acoustic_Guitar_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Bass_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Drum_Kit_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Harmonica_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Lead_Vocal_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Mandolin_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Piano_Custom_Backing_Track.mp3`
-            ]
-        );
-    }, []);
+export default function App() {
+    const classes = useStyles();
 
     return (
-        <div className="App">
-            <header className="App-header">
-                <p>{playerState}</p>
-                <button onClick={player.play.bind(player)}>Play</button>
-                <button onClick={player.pause.bind(player)}>Pause</button>
-            </header>
+        <div className={classes.root}>
+            <CssBaseline />
+            <AppBar position="fixed" className={classes.appBar}>
+                <Toolbar>
+                    <Typography variant="h6" noWrap>
+                        PieWalk
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+            <Drawer
+                className={classes.drawer}
+                variant="permanent"
+                classes={{
+                    paper: classes.drawerPaper
+                }}>
+                <Toolbar />
+                <div className={classes.drawerContainer}>
+                    <SongList />
+                </div>
+            </Drawer>
+            <main className={classes.content}>
+                <Toolbar />
+                <Player />
+            </main>
         </div>
     );
 }
-
-export default App;

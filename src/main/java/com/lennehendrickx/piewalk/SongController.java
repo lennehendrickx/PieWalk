@@ -19,14 +19,14 @@ import static java.util.stream.Collectors.toList;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
-@RequestMapping(path = "/playlist", produces = APPLICATION_JSON_VALUE)
-public class PlaylistController {
+@RequestMapping(path = "/song", produces = APPLICATION_JSON_VALUE)
+public class SongController {
 
     @Value("${BASE_PATH:/Users/lennehendrickx/Documents/karaoke-version-lijst}")
     private Path basePath;
 
     @GetMapping
-    Flux<Song> playlist() {
+    Flux<Song> song() {
         return Flux.fromStream(list(basePath, Files::isDirectory).map(this::toSong));
     }
 
