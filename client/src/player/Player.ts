@@ -40,6 +40,7 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
     }
 
     async load(paths: Array<string>): Promise<void> {
+        this.clear();
         this.state = PlayerState.LOADING;
         this._tracks = await Promise.all(paths.map(track => this._createTrack(track)));
         this.state = PlayerState.PAUSED;
@@ -83,6 +84,7 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
 
         this._tracks.forEach(track => track.clear());
         this._tracks = [];
+        this._startTime = this._currentTime = 0;
         this.state = PlayerState.EMPTY;
     }
 
