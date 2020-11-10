@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Player from './ui/player/Player';
@@ -8,6 +8,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import SongList from './ui/songlist/SongList';
+import { Song } from './ui/songlist/SongApi';
 
 const drawerWidth = 300;
 
@@ -37,7 +38,14 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export default function App() {
+    const [song, setSong] = useState<Song>();
     const classes = useStyles();
+
+    const toTracks = (song: Song | undefined) => {
+        return song
+            ? song.tracks.map(track => `${song.name}/${track.name}`)
+            : [];
+    };
 
     return (
         <div className={classes.root}>
@@ -45,7 +53,7 @@ export default function App() {
             <AppBar position="fixed" className={classes.appBar}>
                 <Toolbar>
                     <Typography variant="h6" noWrap>
-                        PieWalk
+                        PieWalk Studio
                     </Typography>
                 </Toolbar>
             </AppBar>
@@ -57,12 +65,12 @@ export default function App() {
                 }}>
                 <Toolbar />
                 <div className={classes.drawerContainer}>
-                    <SongList />
+                    <SongList onSongSelected={setSong} />
                 </div>
             </Drawer>
             <main className={classes.content}>
                 <Toolbar />
-                <Player />
+                <Player tracks={toTracks(song)} />
             </main>
         </div>
     );

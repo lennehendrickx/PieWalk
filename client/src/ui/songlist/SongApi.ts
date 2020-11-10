@@ -1,5 +1,10 @@
+export type Track = {
+    name: string
+}
+
 export type Song = {
     name: string
+    tracks: Array<Track>
 }
 
 class SongApi {

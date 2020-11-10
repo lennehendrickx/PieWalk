@@ -5,7 +5,12 @@ import ListItemText from '@material-ui/core/ListItemText';
 import songApi, { Song } from './SongApi';
 
 
-export default function SongList() {
+type SongListProps = {
+    onSongSelected: (song: Song) => void
+}
+
+
+export default function SongList({ onSongSelected = () => {} }: SongListProps) {
 
     const [songList, setSongList] = useState<Array<Song>>([]);
 
@@ -13,15 +18,17 @@ export default function SongList() {
         const fetchSongList = async () => {
             const songList = await songApi.list();
             setSongList(songList);
-        }
+        };
         fetchSongList();
-    }, [])
+    }, []);
 
     return (
         <List>
-            {songList.map(({name}) => (
-                <ListItem button key={name}>
-                    <ListItemText primary={name} />
+            {songList.map((song) => (
+                <ListItem button key={song.name} onClick={() => {
+                    onSongSelected(song);
+                }}>
+                    <ListItemText primary={song.name} />
                 </ListItem>
             ))}
         </List>

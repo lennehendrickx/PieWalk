@@ -5,7 +5,11 @@ import { FetchAudioLoader } from '../../model/player/AudioLoader';
 const audioLoader = new FetchAudioLoader();
 const player = new MultitrackPlayer(audioLoader);
 
-function Player() {
+type PlayerProps = {
+    tracks: Array<string>
+}
+
+function Player({ tracks = [] }: PlayerProps) {
     const [playerState, setPlayerState] = useState(player.state);
 
     const handlePlayerStateChanged = useCallback(
@@ -19,19 +23,8 @@ function Player() {
     }, [handlePlayerStateChanged]);
 
     useEffect(() => {
-        player.load(
-            [
-                `Billy_Joel_Piano_Man/Accordion_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Acoustic_Guitar_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Bass_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Drum_Kit_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Harmonica_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Lead_Vocal_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Mandolin_Custom_Backing_Track.mp3`,
-                `Billy_Joel_Piano_Man/Piano_Custom_Backing_Track.mp3`
-            ]
-        );
-    }, []);
+        player.load(tracks);
+    }, [tracks]);
 
     return (
         <div className="Player">

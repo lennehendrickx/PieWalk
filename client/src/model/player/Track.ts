@@ -38,7 +38,7 @@ class Track extends EventEmitter<EventTypes> {
                 // happens asynchronously after stop has been called, or the track has completed playing
                 this._trackSource?.disconnect();
                 this._trackSource = undefined;
-                this.state = this._state === TrackState.PLAYING
+                this.state = this.state === TrackState.PLAYING
                     ? TrackState.ENDED
                     : TrackState.PAUSED;
             };
