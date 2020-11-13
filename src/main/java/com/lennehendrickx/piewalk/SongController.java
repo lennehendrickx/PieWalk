@@ -36,13 +36,16 @@ public class SongController {
     }
 
     private Song toSong(Path songPath) {
-        var name = songPath.getFileName().toString();
+        var name = toName(songPath.getFileName().toString());
+        var path = basePath.relativize(songPath).toString();
         var tracks = list(songPath, Files::isRegularFile).map(this::toTrack).collect(toList());
-        return new Song(name, tracks);
+        return new Song(name, path, tracks);
     }
 
     private Track toTrack(Path trackPath) {
-        return new Track(trackPath.getFileName().toString());
+        var name = toName(trackPath.getFileName().toString());
+        var path = basePath.relativize(trackPath).toString();
+        return new Track(name, path);
     }
 
     private static Stream<Path> list(Path path, Predicate<Path> predicate) {
@@ -51,5 +54,9 @@ public class SongController {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static String toName(String path) {
+        return path.replaceAll("_", " ");
     }
 }

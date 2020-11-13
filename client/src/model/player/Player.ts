@@ -1,6 +1,7 @@
 import Track, { TrackState } from './Track';
 import { AudioLoader } from './AudioLoader';
 import { EventEmitter } from './EventEmitter';
+import scheduleWhile from './Scheduler';
 
 export enum PlayerState {
     EMPTY = 'EMPTY',
@@ -17,6 +18,7 @@ export type PlayerStateChanged = {
 
 type EventTypes = {
     stateChange: PlayerStateChanged;
+    timeUpdate: number;
 };
 
 class MultitrackPlayer extends EventEmitter<EventTypes> {
@@ -37,12 +39,27 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         // @ts-ignore
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this._audioContext = new AudioContext();
+        this.on('stateChange', ({ to }) => {
+            if (to === PlayerState.PLAYING) {
+                scheduleWhile({
+                    predicate: () => this._state === PlayerState.PLAYING,
+                    callback: () => this.emitTimeUpdate(),
+                    interval: 50,
+                });
+            } else {
+                this.emitTimeUpdate();
+            }
+        });
     }
 
     async load(paths: Array<string>): Promise<void> {
+        if (paths.length === 0) {
+            return;
+        }
+
         this.clear();
         this.state = PlayerState.LOADING;
-        this._tracks = await Promise.all(paths.map(track => this._createTrack(track)));
+        this._tracks = await Promise.all(paths.map((track) => this._createTrack(track)));
         this.state = PlayerState.PAUSED;
     }
 
@@ -51,7 +68,10 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         const audioBuffer = await this._audioContext.decodeAudioData(arrayBuffer);
         const track = new Track(audioBuffer, this._audioContext);
         track.on('stateChange', ({ to }) => {
-            if (to === TrackState.ENDED && this._tracks.every(({ state }) => state === TrackState.ENDED)) {
+            if (
+                to === TrackState.ENDED &&
+                this._tracks.every(({ state }) => state === TrackState.ENDED)
+            ) {
                 this._currentTime = this._startTime = 0;
                 this.state = PlayerState.ENDED;
             }
@@ -63,18 +83,22 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         await this._resumeAudioContext();
         if (this._state === PlayerState.PAUSED || this._state === PlayerState.ENDED) {
             this._startTime = this._audioContext.currentTime;
-            this._tracks.forEach(track => track.play(this._currentTime));
+            this._tracks.forEach((track) => track.play(this._currentTime));
             this.state = PlayerState.PLAYING;
         }
     }
 
     pause(): void {
         if (this._state === PlayerState.PLAYING) {
-            this._tracks.forEach(track => track.pause());
-            const offset = this._audioContext.currentTime - this._startTime;
-            this._currentTime = this._currentTime + offset;
+            this._tracks.forEach((track) => track.pause());
+            this._currentTime = this.currentTime;
             this.state = PlayerState.PAUSED;
         }
+    }
+
+    stop(): void {
+        this.pause();
+        this.currentTime = 0;
     }
 
     clear(): void {
@@ -82,7 +106,7 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
             return;
         }
 
-        this._tracks.forEach(track => track.clear());
+        this._tracks.forEach((track) => track.clear());
         this._tracks = [];
         this._startTime = this._currentTime = 0;
         this.state = PlayerState.EMPTY;
@@ -106,6 +130,33 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         if (from !== to) {
             this.emit('stateChange', { from, to });
         }
+    }
+
+    get currentTime() {
+        if (this._state === PlayerState.PLAYING) {
+            const offset = this._audioContext.currentTime - this._startTime;
+            return this._currentTime + offset;
+        }
+
+        return this._currentTime;
+    }
+
+    set currentTime(currentTime) {
+        const currentState = this._state;
+        if (currentState === PlayerState.PLAYING) {
+            this.pause();
+        }
+
+        this._currentTime = this._startTime = currentTime;
+        this.emitTimeUpdate();
+
+        if (currentState === PlayerState.PLAYING) {
+            this.play();
+        }
+    }
+
+    private emitTimeUpdate() {
+        this.emit('timeUpdate', this.currentTime);
     }
 }
 

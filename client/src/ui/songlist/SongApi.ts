@@ -1,11 +1,13 @@
 export type Track = {
-    name: string
-}
+    name: string;
+    path: string;
+};
 
 export type Song = {
-    name: string
-    tracks: Array<Track>
-}
+    name: string;
+    path: string;
+    tracks: Array<Track>;
+};
 
 class SongApi {
     private static SERVER_URL: String = 'http://localhost:8080';
