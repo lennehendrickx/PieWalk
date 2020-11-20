@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import './App.css';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import Player from './ui/player/Player';
+import Tracks from './ui/player/TrackOverview';
+import ControlBar from './ui/player/ControlBar';
 import {
     createStyles,
     Theme,
@@ -15,18 +16,16 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import SongList from './ui/songlist/SongList';
 import { Song } from './ui/songlist/SongApi';
-import { IconButton } from '@material-ui/core';
-import MenuIcon from '@material-ui/icons/Menu';
-import SearchIcon from '@material-ui/icons/Search';
-import MoreIcon from '@material-ui/icons/MoreVert';
-import deepOrange from '@material-ui/core/colors/blueGrey';
+import blueGray from '@material-ui/core/colors/blueGrey';
+import { FetchAudioLoader } from './model/player/AudioLoader';
+import MultitrackPlayer from './model/player/Player';
 
 const drawerWidth = 300;
 
 const theme = createMuiTheme({
     palette: {
         type: 'dark',
-        primary: deepOrange,
+        primary: blueGray,
     },
 });
 
@@ -39,6 +38,7 @@ const useStyles = makeStyles((theme: Theme) =>
             zIndex: theme.zIndex.drawer + 1,
         },
         appBarBottom: {
+            zIndex: theme.zIndex.drawer + 1,
             top: 'auto',
             bottom: 0,
         },
@@ -61,6 +61,10 @@ const useStyles = makeStyles((theme: Theme) =>
         },
     })
 );
+
+const audioLoader = new FetchAudioLoader();
+const player = new MultitrackPlayer(audioLoader);
+
 export default function App() {
     const [song, setSong] = useState<Song>();
     const classes = useStyles();
@@ -84,28 +88,17 @@ export default function App() {
                     }}
                 >
                     <Toolbar />
-
                     <div className={classes.drawerContainer}>
-                        <SongList onSongSelected={setSong} />
+                        <SongList selectedSong={song} onSelectedSongChanged={setSong} />
                     </div>
+                    <Toolbar />
                 </Drawer>
                 <main className={classes.content}>
                     <Toolbar />
-                    <Player song={song} />
+                    <Tracks player={player} song={song} />
                 </main>
-                <AppBar position="fixed" color="primary" className={classes.appBarBottom}>
-                    <Toolbar>
-                        <IconButton edge="start" color="inherit" aria-label="open drawer">
-                            <MenuIcon />
-                        </IconButton>
-                        <div className={classes.grow} />
-                        <IconButton color="inherit">
-                            <SearchIcon />
-                        </IconButton>
-                        <IconButton edge="end" color="inherit">
-                            <MoreIcon />
-                        </IconButton>
-                    </Toolbar>
+                <AppBar color="default" position="fixed" className={classes.appBarBottom}>
+                    <ControlBar player={player} song={song} />
                 </AppBar>
             </div>
         </ThemeProvider>

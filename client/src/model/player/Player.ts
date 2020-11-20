@@ -155,6 +155,18 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         }
     }
 
+    public get duration(): number | undefined {
+        return this._tracks
+            .map(({ duration }) => duration)
+            .reduce(
+                (previousDuration, duration) =>
+                    duration === undefined || previousDuration === undefined
+                        ? undefined
+                        : Math.max(previousDuration, duration),
+                0
+            );
+    }
+
     private emitTimeUpdate() {
         this.emit('timeUpdate', this.currentTime);
     }

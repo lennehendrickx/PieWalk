@@ -20,28 +20,34 @@ class Track extends EventEmitter<EventTypes> {
     private _state: TrackState;
     private _audioContext: AudioContext;
     private _trackSource: AudioBufferSourceNode | undefined;
+    private _gainNode: GainNode;
     private _audioBuffer: AudioBuffer;
+    private _volume: number;
+    private _muted: boolean;
 
     constructor(audioBuffer: AudioBuffer, audioContext: AudioContext) {
         super();
+        this._volume = 1;
+        this._muted = false;
         this._audioBuffer = audioBuffer;
         this._audioContext = audioContext;
+        this._gainNode = audioContext.createGain();
+        this._gainNode.connect(audioContext.destination);
         this._state = TrackState.PAUSED;
     }
 
-    public play(offset = 0):void {
+    public play(offset = 0): void {
         if (this._state === TrackState.PAUSED || this._state === TrackState.ENDED) {
             this._trackSource = this._audioContext.createBufferSource();
             this._trackSource.buffer = this._audioBuffer;
-            this._trackSource.connect(this._audioContext.destination);
             this._trackSource.onended = () => {
                 // happens asynchronously after stop has been called, or the track has completed playing
                 this._trackSource?.disconnect();
                 this._trackSource = undefined;
-                this.state = this.state === TrackState.PLAYING
-                    ? TrackState.ENDED
-                    : TrackState.PAUSED;
+                this.state =
+                    this.state === TrackState.PLAYING ? TrackState.ENDED : TrackState.PAUSED;
             };
+            this._trackSource.connect(this._gainNode);
             this._trackSource.start(0, offset);
             this.state = TrackState.PLAYING;
         }
@@ -62,12 +68,38 @@ class Track extends EventEmitter<EventTypes> {
                 this._trackSource.stop(0);
                 this._trackSource = undefined;
             }
+            this._gainNode.disconnect();
             this.state = TrackState.CLEARED;
         }
     }
 
+    public get duration(): number | undefined {
+        return this._audioBuffer?.duration;
+    }
+
+    public get volume(): number {
+        return this._volume;
+    }
+
+    public set volume(volume: number) {
+        this._gainNode.gain.value = volume;
+        this._volume = volume;
+        if (volume > 0) {
+            this._muted = false;
+        }
+    }
+
+    public get muted() {
+        return this._muted;
+    }
+
+    public set muted(muted: boolean) {
+        this._gainNode.gain.value = muted ? 0 : this._volume;
+        this._muted = muted;
+    }
+
     // @ts-ignore
-    public get state():TrackState {
+    public get state(): TrackState {
         return this._state;
     }
 
