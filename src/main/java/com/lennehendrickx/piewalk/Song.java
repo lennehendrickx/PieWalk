@@ -8,15 +8,15 @@ import java.util.List;
 public class Song {
 
     private final String name;
-    private final String path;
+    private final String src;
     private final List<Track> tracks;
 
     @JsonCreator
     public Song(@JsonProperty("name") String name,
-                @JsonProperty("path") String path,
+                @JsonProperty("src") String src,
                 @JsonProperty("tracks") List<Track> tracks) {
         this.name = name;
-        this.path = path;
+        this.src = src;
         this.tracks = tracks;
     }
 
@@ -24,8 +24,8 @@ public class Song {
         return name;
     }
 
-    public String getPath() {
-        return path;
+    public String getSrc() {
+        return src;
     }
 
     public List<Track> getTracks() {

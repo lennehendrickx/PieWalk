@@ -16,12 +16,17 @@ export type PlayerStateChanged = {
     to: PlayerState;
 };
 
-type EventTypes = {
-    stateChange: PlayerStateChanged;
-    timeUpdate: number;
+export type PlayerEventTypes = {
+    statechange: PlayerStateChanged;
+    timeupdate: number;
 };
 
-class MultitrackPlayer extends EventEmitter<EventTypes> {
+export type Source = {
+    src: string;
+    name: string;
+};
+
+class MultiTrackPlayer extends EventEmitter<PlayerEventTypes> {
     private _state: PlayerState;
     private readonly _audioContext: AudioContext;
     private _audioLoader: AudioLoader;
@@ -39,7 +44,7 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         // @ts-ignore
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this._audioContext = new AudioContext();
-        this.on('stateChange', ({ to }) => {
+        this.on('statechange', ({ to }) => {
             if (to === PlayerState.PLAYING) {
                 scheduleWhile({
                     predicate: () => this._state === PlayerState.PLAYING,
@@ -52,22 +57,26 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         });
     }
 
-    async load(paths: Array<string>): Promise<void> {
-        if (paths.length === 0) {
+    public get tracks() {
+        return this._tracks;
+    }
+
+    async load(sources: Array<Source>): Promise<void> {
+        if (sources.length === 0) {
             return;
         }
 
         this.clear();
         this.state = PlayerState.LOADING;
-        this._tracks = await Promise.all(paths.map((track) => this._createTrack(track)));
+        this._tracks = await Promise.all(sources.map((source) => this._createTrack(source)));
         this.state = PlayerState.PAUSED;
     }
 
-    private async _createTrack(path: string): Promise<Track> {
-        const arrayBuffer = await this._audioLoader.load(path);
+    private async _createTrack(source: Source): Promise<Track> {
+        const arrayBuffer = await this._audioLoader.load(source.src);
         const audioBuffer = await this._audioContext.decodeAudioData(arrayBuffer);
-        const track = new Track(audioBuffer, this._audioContext);
-        track.on('stateChange', ({ to }) => {
+        const track = new Track(source, audioBuffer, this._audioContext);
+        track.on('statechange', ({ to }) => {
             if (
                 to === TrackState.ENDED &&
                 this._tracks.every(({ state }) => state === TrackState.ENDED)
@@ -128,7 +137,7 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
         const from = this._state;
         this._state = to;
         if (from !== to) {
-            this.emit('stateChange', { from, to });
+            this.emit('statechange', { from, to });
         }
     }
 
@@ -168,8 +177,8 @@ class MultitrackPlayer extends EventEmitter<EventTypes> {
     }
 
     private emitTimeUpdate() {
-        this.emit('timeUpdate', this.currentTime);
+        this.emit('timeupdate', this.currentTime);
     }
 }
 
-export default MultitrackPlayer;
+export default MultiTrackPlayer;

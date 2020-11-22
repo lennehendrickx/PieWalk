@@ -6,20 +6,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class Track {
 
     private final String name;
-    private final String path;
+    private final String src;
 
     @JsonCreator
     public Track(@JsonProperty("name") String name,
-                 @JsonProperty("path") String path) {
+                 @JsonProperty("src") String src) {
         this.name = name;
-        this.path = path;
+        this.src = src;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getPath() {
-        return path;
+    public String getSrc() {
+        return src;
     }
 }

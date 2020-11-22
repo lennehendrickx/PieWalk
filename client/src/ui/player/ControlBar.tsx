@@ -1,9 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import MultitrackPlayer, { PlayerState, PlayerStateChanged } from '../../model/player/Player';
+import React from 'react';
+import MultitrackPlayer, {
+    PlayerEventTypes,
+    PlayerState,
+} from '../../model/player/MultiTrackPlayer';
 import { Song } from '../songlist/SongApi';
 import { IconButton, LinearProgress, Typography } from '@material-ui/core';
 import { PauseCircleFilled, PlayCircleFilled, Stop } from '@material-ui/icons';
 import Toolbar from '@material-ui/core/Toolbar';
+import useEmitterState from '../use-emitter-state';
 
 type ControlBarProps = {
     song?: Song;
@@ -11,34 +15,32 @@ type ControlBarProps = {
 };
 
 function ControlBar({ song, player }: ControlBarProps) {
-    const [playerState, setPlayerState] = useState(player.state);
-    const [playerCurrentTime, setPlayerCurrentTime] = useState(player.currentTime);
-
-    const handlePlayerStateChanged = useCallback(
-        ({ to }: PlayerStateChanged) => setPlayerState(to),
-        [setPlayerState]
+    const playerState = useEmitterState<PlayerState, PlayerEventTypes, 'statechange'>(
+        player,
+        'statechange',
+        ({ to }) => to,
+        player.state
     );
-
-    useEffect(() => {
-        player.on('stateChange', handlePlayerStateChanged);
-        return () => player.off('stateChange', handlePlayerStateChanged);
-    }, [handlePlayerStateChanged]);
-
-    const handlePlayerCurrentTimeChanged = useCallback(
-        (currentTime: number) => setPlayerCurrentTime(currentTime),
-        [setPlayerState]
+    const playerCurrentTime = useEmitterState<number, PlayerEventTypes, 'timeupdate'>(
+        player,
+        'timeupdate',
+        (event) => event,
+        player.currentTime
     );
-
-    useEffect(() => {
-        player.on('timeUpdate', handlePlayerCurrentTimeChanged);
-        return () => player.off('timeUpdate', handlePlayerCurrentTimeChanged);
-    }, [handlePlayerCurrentTimeChanged]);
 
     const secondsToClock = (input: number) => {
         const minutes = String(Math.trunc(input / 60)).padStart(2, '0');
         const seconds = String(Math.trunc(input % 60)).padStart(2, '0');
         const millis = String(Math.trunc((input % 1) * 1000)).padStart(3, '0');
         return `${minutes}:${seconds}.${millis}`;
+    };
+
+    const clock = () =>
+        `${secondsToClock(playerCurrentTime ?? 0)} / ${secondsToClock(player.duration ?? 0)}`;
+
+    const toProgress = () => {
+        const currentTime = playerCurrentTime ?? 0;
+        return player.duration !== undefined ? (currentTime / player.duration) * 100 : 0;
     };
 
     return (
@@ -59,11 +61,10 @@ function ControlBar({ song, player }: ControlBarProps) {
                 <LinearProgress
                     style={{ width: 300, margin: '0 20px' }}
                     variant="determinate"
-                    value={player.duration ? (playerCurrentTime / player.duration) * 100 : 0}
+                    value={toProgress()}
                 />
                 <Typography variant={'caption'}>
-                    {secondsToClock(playerCurrentTime)} / {secondsToClock(player.duration || 0)} (
-                    {playerState})
+                    {clock()} ({playerState})
                 </Typography>
             </Toolbar>
         </React.Fragment>

@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
 import songApi, { Song } from './SongApi';
-import { Divider } from '@material-ui/core';
 import SearchBox from './SearchBox';
-import useDebounce from './use-debounce';
+import { List } from '@material-ui/core';
+import SongListItem from './SongListItem';
+import Typography from '@material-ui/core/Typography';
 
 type SongListProps = {
     selectedSong: Song | undefined;
@@ -19,7 +17,6 @@ export default function SongList({
     const [songList, setSongList] = useState<Array<Song>>([]);
     const [filteredSongList, setFilteredSongList] = useState<Array<Song>>([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const debouncedSearchQuery = useDebounce<string>(searchQuery, 10);
 
     useEffect(() => {
         const fetchSongList = async () => {
@@ -31,32 +28,23 @@ export default function SongList({
 
     useEffect(() => {
         setFilteredSongList(
-            songList.filter((song) =>
-                song.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
-            )
+            songList.filter((song) => song.name.toLowerCase().includes(searchQuery.toLowerCase()))
         );
-    }, [songList, debouncedSearchQuery]);
+    }, [songList, searchQuery]);
 
     return (
         <React.Fragment>
             <SearchBox value={searchQuery} onChange={setSearchQuery} />
+            <Typography variant="caption" noWrap style={{ margin: '0 15px' }}>
+                {filteredSongList.length} out of {songList.length} songs
+            </Typography>
             <List>
                 {filteredSongList.map((song) => (
-                    <React.Fragment key={song.name}>
-                        <Divider component="li" />
-                        <ListItem
-                            button
-                            selected={song === selectedSong}
-                            onClick={() => {
-                                onSelectedSongChanged(song);
-                            }}
-                        >
-                            <ListItemText
-                                primary={song.name}
-                                secondary={`Song has ${song.tracks.length} tracks`}
-                            />
-                        </ListItem>
-                    </React.Fragment>
+                    <SongListItem
+                        song={song}
+                        selected={song === selectedSong}
+                        onSelected={onSelectedSongChanged}
+                    />
                 ))}
             </List>
         </React.Fragment>

@@ -1,11 +1,11 @@
 export type Track = {
     name: string;
-    path: string;
+    src: string;
 };
 
 export type Song = {
     name: string;
-    path: string;
+    src: string;
     tracks: Array<Track>;
 };
 

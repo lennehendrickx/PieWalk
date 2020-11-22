@@ -18,7 +18,7 @@ import SongList from './ui/songlist/SongList';
 import { Song } from './ui/songlist/SongApi';
 import blueGray from '@material-ui/core/colors/blueGrey';
 import { FetchAudioLoader } from './model/player/AudioLoader';
-import MultitrackPlayer from './model/player/Player';
+import MultitrackPlayer from './model/player/MultiTrackPlayer';
 
 const drawerWidth = 300;
 

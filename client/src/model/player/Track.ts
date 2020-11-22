@@ -1,4 +1,5 @@
 import { EventEmitter } from './EventEmitter';
+import { Source } from './MultiTrackPlayer';
 
 export enum TrackState {
     CLEARED = 'CLEARED',
@@ -12,11 +13,13 @@ export type TrackStateChanged = {
     to: TrackState;
 };
 
-type EventTypes = {
-    stateChange: TrackStateChanged;
+export type TrackEventTypes = {
+    statechange: TrackStateChanged;
+    mutechange: boolean;
 };
 
-class Track extends EventEmitter<EventTypes> {
+class Track extends EventEmitter<TrackEventTypes> {
+    private _source: Source;
     private _state: TrackState;
     private _audioContext: AudioContext;
     private _trackSource: AudioBufferSourceNode | undefined;
@@ -25,8 +28,9 @@ class Track extends EventEmitter<EventTypes> {
     private _volume: number;
     private _muted: boolean;
 
-    constructor(audioBuffer: AudioBuffer, audioContext: AudioContext) {
+    constructor(source: Source, audioBuffer: AudioBuffer, audioContext: AudioContext) {
         super();
+        this._source = source;
         this._volume = 1;
         this._muted = false;
         this._audioBuffer = audioBuffer;
@@ -73,6 +77,10 @@ class Track extends EventEmitter<EventTypes> {
         }
     }
 
+    public get source() {
+        return this._source;
+    }
+
     public get duration(): number | undefined {
         return this._audioBuffer?.duration;
     }
@@ -96,6 +104,7 @@ class Track extends EventEmitter<EventTypes> {
     public set muted(muted: boolean) {
         this._gainNode.gain.value = muted ? 0 : this._volume;
         this._muted = muted;
+        this.emit('mutechange', muted);
     }
 
     // @ts-ignore
@@ -108,7 +117,7 @@ class Track extends EventEmitter<EventTypes> {
         const from = this._state;
         this._state = to;
         if (from !== to) {
-            this.emit('stateChange', { from, to });
+            this.emit('statechange', { from, to });
         }
     }
 }
