@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import songApi, { Song } from './SongApi';
 import SearchBox from './SearchBox';
-import { List } from '@material-ui/core';
+import { List, Typography } from '@material-ui/core';
 import SongListItem from './SongListItem';
-import Typography from '@material-ui/core/Typography';
 
 type SongListProps = {
     selectedSong: Song | undefined;

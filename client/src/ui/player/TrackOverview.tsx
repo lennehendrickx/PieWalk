@@ -13,12 +13,12 @@ type PlayerProps = {
 };
 
 function TrackOverview({ song, player }: PlayerProps) {
-    const playerTracks = useEmitterState<Array<Track>, PlayerEventTypes, 'statechange'>(
-        player,
-        'statechange',
-        (event) => player.tracks,
-        player.tracks
-    );
+    const playerTracks = useEmitterState<Array<Track>, PlayerEventTypes, 'statechange'>({
+        target: player,
+        eventName: 'statechange',
+        eventMapper: (event) => player.tracks,
+        initialState: player.tracks,
+    });
 
     useEffect(() => {
         if (song) {

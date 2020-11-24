@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { EventEmitter, EventKey, EventMap } from '../model/player/EventEmitter';
 
-export default function useEmitterState<S, T extends EventMap, K extends EventKey<T>>(
-    target: EventEmitter<T>,
-    eventName: K,
-    eventMapper: (event: T[K]) => S | undefined = (event) => event,
-    defaultState: S | undefined = undefined
-): S | undefined {
-    const [state, setState] = useState<S | undefined>(defaultState);
+type EmitterStateProps<S, T extends EventMap, K extends EventKey<T>> = {
+    target: EventEmitter<T>;
+    eventName: K;
+    eventMapper?: (event: T[K]) => S;
+    initialState?: S;
+};
+
+export default function useEmitterState<S, T extends EventMap, K extends EventKey<T>>({
+    target,
+    eventName,
+    eventMapper = (event) => event,
+    initialState,
+}: EmitterStateProps<S, T, K>): S | undefined {
+    const [state, setState] = useState<S | undefined>(initialState);
 
     const handleEventEmitted = useCallback(
         (event) => {
@@ -21,7 +28,6 @@ export default function useEmitterState<S, T extends EventMap, K extends EventKe
     useEffect(() => {
         target.on(eventName, handleEventEmitted);
         return () => target.off(eventName, handleEventEmitted);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleEventEmitted]);
 
     return state;

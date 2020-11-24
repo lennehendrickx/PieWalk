@@ -4,9 +4,8 @@ import MultitrackPlayer, {
     PlayerState,
 } from '../../model/player/MultiTrackPlayer';
 import { Song } from '../songlist/SongApi';
-import { IconButton, LinearProgress, Typography } from '@material-ui/core';
+import { IconButton, LinearProgress, Typography, Toolbar } from '@material-ui/core';
 import { PauseCircleFilled, PlayCircleFilled, Stop } from '@material-ui/icons';
-import Toolbar from '@material-ui/core/Toolbar';
 import useEmitterState from '../use-emitter-state';
 
 type ControlBarProps = {
@@ -15,18 +14,17 @@ type ControlBarProps = {
 };
 
 function ControlBar({ song, player }: ControlBarProps) {
-    const playerState = useEmitterState<PlayerState, PlayerEventTypes, 'statechange'>(
-        player,
-        'statechange',
-        ({ to }) => to,
-        player.state
-    );
-    const playerCurrentTime = useEmitterState<number, PlayerEventTypes, 'timeupdate'>(
-        player,
-        'timeupdate',
-        (event) => event,
-        player.currentTime
-    );
+    const playerState = useEmitterState<PlayerState, PlayerEventTypes, 'statechange'>({
+        target: player,
+        eventName: 'statechange',
+        eventMapper: ({ to }) => to,
+        initialState: player.state,
+    });
+    const playerCurrentTime = useEmitterState<number, PlayerEventTypes, 'timeupdate'>({
+        target: player,
+        eventName: 'timeupdate',
+        initialState: player.currentTime,
+    });
 
     const secondsToClock = (input: number) => {
         const minutes = String(Math.trunc(input / 60)).padStart(2, '0');
@@ -47,15 +45,15 @@ function ControlBar({ song, player }: ControlBarProps) {
         <React.Fragment>
             <Toolbar style={{ justifyContent: 'center' }}>
                 {playerState === PlayerState.PLAYING ? (
-                    <IconButton color="inherit" onClick={player.pause.bind(player)}>
+                    <IconButton color="inherit" onClick={() => player.pause()}>
                         <PauseCircleFilled />
                     </IconButton>
                 ) : (
-                    <IconButton color="inherit" onClick={player.play.bind(player)}>
+                    <IconButton color="inherit" onClick={() => player.play()}>
                         <PlayCircleFilled />
                     </IconButton>
                 )}
-                <IconButton color="inherit" onClick={player.stop.bind(player)}>
+                <IconButton color="inherit" onClick={() => player.stop()}>
                     <Stop />
                 </IconButton>
                 <LinearProgress

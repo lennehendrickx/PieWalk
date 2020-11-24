@@ -1,6 +1,6 @@
 import { Song } from './SongApi';
 import React from 'react';
-import { Divider, ListItem, ListItemText } from '@material-ui/core';
+import { Divider, ListItem, ListItemText, Typography } from '@material-ui/core';
 
 type SongListItemProps = {
     song: Song;
@@ -20,8 +20,14 @@ export default function SongListItem({ song, selected, onSelected = () => {} }: 
                 }}
             >
                 <ListItemText
-                    primary={song.name}
-                    secondary={`Song has ${song.tracks.length} tracks`}
+                    primary={`${song.name} (${song.metadata?.releaseDate})`}
+                    secondary={
+                        <React.Fragment>
+                            <Typography variant={'body2'}>
+                                {song.metadata?.genre} - {song.tracks.length} tracks
+                            </Typography>
+                        </React.Fragment>
+                    }
                 />
             </ListItem>
         </React.Fragment>

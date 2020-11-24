@@ -1,3 +1,13 @@
+export type Metadata = {
+    title?: string;
+    genre?: string;
+    composer?: string;
+    album?: string;
+    releaseDate?: string;
+    artist?: string;
+    duration?: string;
+};
+
 export type Track = {
     name: string;
     src: string;
@@ -7,6 +17,7 @@ export type Song = {
     name: string;
     src: string;
     tracks: Array<Track>;
+    metadata?: Metadata;
 };
 
 class SongApi {

@@ -10,12 +10,12 @@ type TrackProps = {
 };
 
 function TrackItem({ track }: TrackProps) {
-    const muted = useEmitterState<boolean, TrackEventTypes, 'mutechange'>(
-        track,
-        'mutechange',
-        (muted) => muted,
-        track.muted
-    );
+    const muted = useEmitterState<boolean, TrackEventTypes, 'mutechange'>({
+        target: track,
+        eventName: 'mutechange',
+        eventMapper: (muted) => muted,
+        initialState: track.muted,
+    });
 
     return (
         <ListItem key={track.source.name}>
