@@ -1,8 +1,10 @@
 import { EventEmitter } from './EventEmitter';
 import { Source } from './MultiTrackPlayer';
+import { AudioLoader } from './AudioLoader';
 
 export enum TrackState {
-    CLEARED = 'CLEARED',
+    EMPTY = 'EMPTY',
+    LOADING = 'LOADING',
     PAUSED = 'PAUSED',
     PLAYING = 'PLAYING',
     ENDED = 'ENDED',
@@ -22,28 +24,38 @@ class Track extends EventEmitter<TrackEventTypes> {
     private _source: Source;
     private _state: TrackState;
     private _audioContext: AudioContext;
-    private _trackSource: AudioBufferSourceNode | undefined;
+    private _audioLoader: AudioLoader;
+    private _trackSource?: AudioBufferSourceNode;
     private _gainNode: GainNode;
-    private _audioBuffer: AudioBuffer;
+    private _audioBuffer?: AudioBuffer;
     private _volume: number;
     private _muted: boolean;
 
-    constructor(source: Source, audioBuffer: AudioBuffer, audioContext: AudioContext) {
+    constructor(source: Source, audioLoader: AudioLoader, audioContext: AudioContext) {
         super();
         this._source = source;
         this._volume = 1;
         this._muted = false;
-        this._audioBuffer = audioBuffer;
         this._audioContext = audioContext;
+        this._audioLoader = audioLoader;
         this._gainNode = audioContext.createGain();
         this._gainNode.connect(audioContext.destination);
-        this._state = TrackState.PAUSED;
+        this._state = TrackState.EMPTY;
     }
 
-    public play(offset = 0): void {
+    async load(): Promise<void> {
+        if (this._state === TrackState.EMPTY) {
+            this.state = TrackState.LOADING;
+            const arrayBuffer = await this._audioLoader.load(this._source.src);
+            this._audioBuffer = await this._audioContext.decodeAudioData(arrayBuffer);
+            this.state = TrackState.PAUSED;
+        }
+    }
+
+    play(offset = 0): void {
         if (this._state === TrackState.PAUSED || this._state === TrackState.ENDED) {
             this._trackSource = this._audioContext.createBufferSource();
-            this._trackSource.buffer = this._audioBuffer;
+            this._trackSource.buffer = this._audioBuffer!;
             this._trackSource.onended = () => {
                 // happens asynchronously after stop has been called, or the track has completed playing
                 this._trackSource?.disconnect();
@@ -57,15 +69,15 @@ class Track extends EventEmitter<TrackEventTypes> {
         }
     }
 
-    public pause(): void {
+    pause(): void {
         if (this._state === TrackState.PLAYING) {
             this._trackSource?.stop(0);
             this.state = TrackState.PAUSED;
         }
     }
 
-    public clear(): void {
-        if (this._state !== TrackState.CLEARED) {
+    clear(): void {
+        if (this._state !== TrackState.EMPTY) {
             this.allOff();
             if (this._trackSource) {
                 this._trackSource.onended = null;
@@ -73,23 +85,23 @@ class Track extends EventEmitter<TrackEventTypes> {
                 this._trackSource = undefined;
             }
             this._gainNode.disconnect();
-            this.state = TrackState.CLEARED;
+            this.state = TrackState.EMPTY;
         }
     }
 
-    public get source() {
+    get source() {
         return this._source;
     }
 
-    public get duration(): number | undefined {
+    get duration(): number | undefined {
         return this._audioBuffer?.duration;
     }
 
-    public get volume(): number {
+    get volume(): number {
         return this._volume;
     }
 
-    public set volume(volume: number) {
+    set volume(volume: number) {
         this._gainNode.gain.value = volume;
         this._volume = volume;
         if (volume > 0) {
@@ -97,11 +109,11 @@ class Track extends EventEmitter<TrackEventTypes> {
         }
     }
 
-    public get muted() {
+    get muted() {
         return this._muted;
     }
 
-    public set muted(muted: boolean) {
+    set muted(muted: boolean) {
         this._gainNode.gain.value = muted ? 0 : this._volume;
         this._muted = muted;
         this.emit('mutechange', muted);
@@ -113,7 +125,7 @@ class Track extends EventEmitter<TrackEventTypes> {
     }
 
     // @ts-ignore
-    private set state(to: TrackState) {
+    set state(to: TrackState) {
         const from = this._state;
         this._state = to;
         if (from !== to) {

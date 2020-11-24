@@ -57,7 +57,7 @@ class MultiTrackPlayer extends EventEmitter<PlayerEventTypes> {
         });
     }
 
-    public get tracks() {
+    get tracks() {
         return this._tracks;
     }
 
@@ -67,15 +67,14 @@ class MultiTrackPlayer extends EventEmitter<PlayerEventTypes> {
         }
 
         this.clear();
+        this._tracks = await sources.map((song) => this._createTrack(song));
         this.state = PlayerState.LOADING;
-        this._tracks = await Promise.all(sources.map((source) => this._createTrack(source)));
+        await Promise.all(this._tracks.map((track) => track.load()));
         this.state = PlayerState.PAUSED;
     }
 
-    private async _createTrack(source: Source): Promise<Track> {
-        const arrayBuffer = await this._audioLoader.load(source.src);
-        const audioBuffer = await this._audioContext.decodeAudioData(arrayBuffer);
-        const track = new Track(source, audioBuffer, this._audioContext);
+    private _createTrack(source: Source): Track {
+        const track = new Track(source, this._audioLoader, this._audioContext);
         track.on('statechange', ({ to }) => {
             if (
                 to === TrackState.ENDED &&

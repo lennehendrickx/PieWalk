@@ -5,7 +5,7 @@ import { List, Typography } from '@material-ui/core';
 import SongListItem from './SongListItem';
 
 type SongListProps = {
-    selectedSong: Song | undefined;
+    selectedSong?: Song;
     onSelectedSongChanged: (song: Song) => void;
 };
 
