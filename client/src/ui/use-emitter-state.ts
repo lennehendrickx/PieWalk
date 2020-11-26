@@ -28,7 +28,7 @@ export default function useEmitterState<S, T extends EventMap, K extends EventKe
     useEffect(() => {
         target.on(eventName, handleEventEmitted);
         return () => target.off(eventName, handleEventEmitted);
-    }, [handleEventEmitted]);
+    }, [handleEventEmitted, eventName, target]);
 
     return state;
 }

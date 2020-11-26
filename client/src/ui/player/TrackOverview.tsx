@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import MultitrackPlayer, { PlayerEventTypes } from '../../model/player/MultiTrackPlayer';
+import MultitrackPlayer from '../../model/player/MultiTrackPlayer';
 import List from '@material-ui/core/List';
 import { Song } from '../songlist/SongApi';
 import useEmitterState from '../use-emitter-state';
@@ -13,10 +13,10 @@ type PlayerProps = {
 };
 
 function TrackOverview({ song, player }: PlayerProps) {
-    const playerTracks = useEmitterState<Array<Track>, PlayerEventTypes, 'statechange'>({
+    const playerTracks = useEmitterState({
         target: player,
         eventName: 'statechange',
-        eventMapper: (event) => player.tracks,
+        eventMapper: (event): Array<Track> => player.tracks,
         initialState: player.tracks,
     });
 
@@ -36,7 +36,7 @@ function TrackOverview({ song, player }: PlayerProps) {
             <Typography variant="subtitle1">Tracks</Typography>
             <List>
                 {playerTracks?.map((track) => (
-                    <TrackItem track={track} />
+                    <TrackItem key={track.source.name} track={track} />
                 ))}
             </List>
         </div>

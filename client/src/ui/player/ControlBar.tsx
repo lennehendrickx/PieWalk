@@ -1,10 +1,7 @@
-import React from 'react';
-import MultitrackPlayer, {
-    PlayerEventTypes,
-    PlayerState,
-} from '../../model/player/MultiTrackPlayer';
+import React, { MouseEvent } from 'react';
+import MultitrackPlayer, { PlayerState } from '../../model/player/MultiTrackPlayer';
 import { Song } from '../songlist/SongApi';
-import { IconButton, LinearProgress, Typography, Toolbar } from '@material-ui/core';
+import { IconButton, LinearProgress, Toolbar, Typography } from '@material-ui/core';
 import { PauseCircleFilled, PlayCircleFilled, Stop } from '@material-ui/icons';
 import useEmitterState from '../use-emitter-state';
 
@@ -14,13 +11,13 @@ type ControlBarProps = {
 };
 
 function ControlBar({ song, player }: ControlBarProps) {
-    const playerState = useEmitterState<PlayerState, PlayerEventTypes, 'statechange'>({
+    const playerState = useEmitterState({
         target: player,
         eventName: 'statechange',
-        eventMapper: ({ to }) => to,
+        eventMapper: ({ to }): PlayerState => to,
         initialState: player.state,
     });
-    const playerCurrentTime = useEmitterState<number, PlayerEventTypes, 'timeupdate'>({
+    const playerCurrentTime = useEmitterState({
         target: player,
         eventName: 'timeupdate',
         initialState: player.currentTime,
@@ -41,6 +38,29 @@ function ControlBar({ song, player }: ControlBarProps) {
         return player.duration !== undefined ? (currentTime / player.duration) * 100 : 0;
     };
 
+    const toClickXPercentage = (event: MouseEvent) => {
+        // @ts-ignore
+        const targetBoundingClientRect = event.target.getBoundingClientRect();
+        const targetX = window.scrollX + targetBoundingClientRect.x;
+        const targetWidth = targetBoundingClientRect.width;
+        const clickX = event.pageX;
+        const xInProgress = clickX - targetX;
+        return xInProgress / targetWidth;
+    };
+
+    const handleMouseUp = (event: MouseEvent) => {
+        if (player.duration) {
+            const clickXPercentage = toClickXPercentage(event);
+            console.log(`
+                Current time: ${player.currentTime}
+                Duration: ${player.duration}
+                Click percentage: ${clickXPercentage}
+                New current time: ${clickXPercentage * player.duration}
+            `);
+            player.currentTime = clickXPercentage * player.duration;
+        }
+    };
+
     return (
         <React.Fragment>
             <Toolbar style={{ justifyContent: 'center' }}>
@@ -57,9 +77,10 @@ function ControlBar({ song, player }: ControlBarProps) {
                     <Stop />
                 </IconButton>
                 <LinearProgress
-                    style={{ width: 300, margin: '0 20px' }}
+                    style={{ width: 300, margin: '0 20px', padding: '5px 0' }}
                     variant="determinate"
                     value={toProgress()}
+                    onMouseUpCapture={handleMouseUp}
                 />
                 <Typography variant={'caption'}>
                     {clock()} ({playerState})

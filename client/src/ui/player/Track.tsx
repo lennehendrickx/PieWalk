@@ -3,25 +3,24 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { IconButton, ListItem } from '@material-ui/core';
 import { VolumeOff, VolumeUp } from '@material-ui/icons';
 import useEmitterState from '../use-emitter-state';
-import Track, { TrackEventTypes, TrackState } from '../../model/player/Track';
-import { PlayerEventTypes, PlayerState } from '../../model/player/MultiTrackPlayer';
+import Track, { TrackState } from '../../model/player/Track';
 
 type TrackProps = {
+    key?: string;
     track: Track;
 };
 
 function TrackItem({ track }: TrackProps) {
-    const muted = useEmitterState<boolean, TrackEventTypes, 'mutechange'>({
+    const muted = useEmitterState({
         target: track,
         eventName: 'mutechange',
-        eventMapper: (muted) => muted,
         initialState: track.muted,
     });
 
-    const trackState = useEmitterState<TrackState, TrackEventTypes, 'statechange'>({
+    const trackState = useEmitterState({
         target: track,
         eventName: 'statechange',
-        eventMapper: ({ to }) => to,
+        eventMapper: ({ to }): TrackState => to,
         initialState: track.state,
     });
 

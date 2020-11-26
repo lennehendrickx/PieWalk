@@ -3,6 +3,7 @@ import React from 'react';
 import { Divider, ListItem, ListItemText, Typography } from '@material-ui/core';
 
 type SongListItemProps = {
+    key?: string;
     song: Song;
     selected: boolean;
     onSelected: (song: Song) => void;
@@ -10,7 +11,7 @@ type SongListItemProps = {
 
 export default function SongListItem({ song, selected, onSelected = () => {} }: SongListItemProps) {
     return (
-        <React.Fragment key={song.name}>
+        <React.Fragment>
             <Divider component="li" />
             <ListItem
                 button
@@ -22,11 +23,9 @@ export default function SongListItem({ song, selected, onSelected = () => {} }: 
                 <ListItemText
                     primary={`${song.name} (${song.metadata?.releaseDate})`}
                     secondary={
-                        <React.Fragment>
-                            <Typography variant={'body2'}>
-                                {song.metadata?.genre} - {song.tracks.length} tracks
-                            </Typography>
-                        </React.Fragment>
+                        <Typography variant={'body2'}>
+                            {song.metadata?.genre} - {song.tracks.length} tracks
+                        </Typography>
                     }
                 />
             </ListItem>

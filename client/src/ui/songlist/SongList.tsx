@@ -40,6 +40,7 @@ export default function SongList({
             <List>
                 {filteredSongList.map((song) => (
                     <SongListItem
+                        key={song.name}
                         song={song}
                         selected={song === selectedSong}
                         onSelected={onSelectedSongChanged}

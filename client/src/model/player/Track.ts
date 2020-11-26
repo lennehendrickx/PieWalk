@@ -54,16 +54,24 @@ class Track extends EventEmitter<TrackEventTypes> {
 
     play(offset = 0): void {
         if (this._state === TrackState.PAUSED || this._state === TrackState.ENDED) {
-            this._trackSource = this._audioContext.createBufferSource();
-            this._trackSource.buffer = this._audioBuffer!;
-            this._trackSource.onended = () => {
+            const trackSource = this._audioContext.createBufferSource();
+            trackSource.buffer = this._audioBuffer!;
+            trackSource.onended = () => {
                 // happens asynchronously after stop has been called, or the track has completed playing
-                this._trackSource?.disconnect();
-                this._trackSource = undefined;
-                this.state =
-                    this.state === TrackState.PLAYING ? TrackState.ENDED : TrackState.PAUSED;
+                if (trackSource !== this._trackSource) {
+                    // a new track source has already been created
+                    // happens f.e in case of a seek (setting player.currentTime)
+                    // then pause and play are called sequentially
+                    trackSource?.disconnect();
+                } else {
+                    this._trackSource?.disconnect();
+                    this._trackSource = undefined;
+                    this.state =
+                        this.state === TrackState.PLAYING ? TrackState.ENDED : TrackState.PAUSED;
+                }
             };
-            this._trackSource.connect(this._gainNode);
+            trackSource.connect(this._gainNode);
+            this._trackSource = trackSource;
             this._trackSource.start(0, offset);
             this.state = TrackState.PLAYING;
         }
