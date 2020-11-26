@@ -1,4 +1,4 @@
 PieWalk Studio
 
-![PieWalk UI](../main/docs/screenshot.png)
+![PieWalk UI](../main/docs/piewalk.png)
 
