@@ -1,7 +1,15 @@
 import React, { MouseEvent } from 'react';
 import MultitrackPlayer, { PlayerState } from '../../model/player/MultiTrackPlayer';
 import { Song } from '../songlist/SongApi';
-import { IconButton, LinearProgress, Toolbar, Typography } from '@material-ui/core';
+import {
+    createStyles,
+    IconButton,
+    LinearProgress,
+    Theme,
+    Toolbar,
+    Typography,
+    withStyles,
+} from '@material-ui/core';
 import { PauseCircleFilled, PlayCircleFilled, Stop } from '@material-ui/icons';
 import useEmitterState from '../use-emitter-state';
 
@@ -9,6 +17,17 @@ type ControlBarProps = {
     song?: Song;
     player: MultitrackPlayer;
 };
+
+const ProgressBar = withStyles((theme: Theme) =>
+    createStyles({
+        root: {
+            height: 10,
+        },
+        bar: {
+            transition: `transform .1s linear`,
+        },
+    })
+)(LinearProgress);
 
 function ControlBar({ song, player }: ControlBarProps) {
     const playerState = useEmitterState({
@@ -39,8 +58,7 @@ function ControlBar({ song, player }: ControlBarProps) {
     };
 
     const toClickXPercentage = (event: MouseEvent) => {
-        // @ts-ignore
-        const targetBoundingClientRect = event.target.getBoundingClientRect();
+        const targetBoundingClientRect = event.currentTarget.getBoundingClientRect();
         const targetX = window.scrollX + targetBoundingClientRect.x;
         const targetWidth = targetBoundingClientRect.width;
         const clickX = event.pageX;
@@ -76,11 +94,11 @@ function ControlBar({ song, player }: ControlBarProps) {
                 <IconButton color="inherit" onClick={() => player.stop()}>
                     <Stop />
                 </IconButton>
-                <LinearProgress
-                    style={{ width: 300, margin: '0 20px', padding: '5px 0' }}
+                <ProgressBar
+                    style={{ width: 300, margin: '0 20px' }}
                     variant="determinate"
                     value={toProgress()}
-                    onMouseUpCapture={handleMouseUp}
+                    onMouseUp={handleMouseUp}
                 />
                 <Typography variant={'caption'}>
                     {clock()} ({playerState})
