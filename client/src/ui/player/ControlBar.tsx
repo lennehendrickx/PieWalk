@@ -69,12 +69,6 @@ function ControlBar({ song, player }: ControlBarProps) {
     const handleMouseUp = (event: MouseEvent) => {
         if (player.duration) {
             const clickXPercentage = toClickXPercentage(event);
-            console.log(`
-                Current time: ${player.currentTime}
-                Duration: ${player.duration}
-                Click percentage: ${clickXPercentage}
-                New current time: ${clickXPercentage * player.duration}
-            `);
             player.currentTime = clickXPercentage * player.duration;
         }
     };
